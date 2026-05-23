@@ -8,6 +8,7 @@ import GroupPage from './pages/GroupPage'
 import RecipeListPage from './pages/RecipeListPage'
 import AddRecipePage from './pages/AddRecipePage'
 import RecipePage from './pages/RecipePage'
+import GroupSettingsPage from './pages/GroupSettingsPage'
 import './App.css'
 
 function ProtectedRoute({ children }) {
@@ -32,6 +33,7 @@ function AppRoutes() {
       <Route path="/create-group" element={<ProtectedRoute><CreateGroupPage /></ProtectedRoute>} />
       <Route path="/join-group" element={<ProtectedRoute><JoinGroupPage /></ProtectedRoute>} />
       <Route path="/group/:groupId" element={<ProtectedRoute><GroupPage /></ProtectedRoute>} />
+      <Route path="/group/:groupId/settings" element={<ProtectedRoute><GroupSettingsPage /></ProtectedRoute>} />
       <Route path="/group/:groupId/member/:memberId" element={<ProtectedRoute><RecipeListPage /></ProtectedRoute>} />
       <Route path="/group/:groupId/tag/:tag" element={<ProtectedRoute><RecipeListPage /></ProtectedRoute>} />
       <Route path="/group/:groupId/add-recipe" element={<ProtectedRoute><AddRecipePage /></ProtectedRoute>} />
