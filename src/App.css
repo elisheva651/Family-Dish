@@ -43,3 +43,12 @@ button {
 input, textarea {
   font-family: inherit;
 }
+
+.loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100dvh;
+  color: var(--text-muted);
+  font-size: 16px;
+}
