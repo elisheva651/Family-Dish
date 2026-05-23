@@ -3,6 +3,8 @@ import { AuthProvider, useAuth } from './contexts/AuthContext'
 import SignInPage from './pages/SignInPage'
 import HomePage from './pages/HomePage'
 import CreateGroupPage from './pages/CreateGroupPage'
+import JoinGroupPage from './pages/JoinGroupPage'
+import GroupPage from './pages/GroupPage'
 import './App.css'
 
 function ProtectedRoute({ children }) {
@@ -25,6 +27,8 @@ function AppRoutes() {
       <Route path="/signin" element={<PublicRoute><SignInPage /></PublicRoute>} />
       <Route path="/" element={<ProtectedRoute><HomePage /></ProtectedRoute>} />
       <Route path="/create-group" element={<ProtectedRoute><CreateGroupPage /></ProtectedRoute>} />
+      <Route path="/join-group" element={<ProtectedRoute><JoinGroupPage /></ProtectedRoute>} />
+      <Route path="/group/:groupId" element={<ProtectedRoute><GroupPage /></ProtectedRoute>} />
     </Routes>
   )
 }
