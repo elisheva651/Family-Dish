@@ -8,6 +8,7 @@ import GroupPage from './pages/GroupPage'
 import RecipeListPage from './pages/RecipeListPage'
 import AddRecipePage from './pages/AddRecipePage'
 import RecipePage from './pages/RecipePage'
+import EditRecipePage from './pages/EditRecipePage'
 import GroupSettingsPage from './pages/GroupSettingsPage'
 import './App.css'
 
@@ -38,6 +39,7 @@ function AppRoutes() {
       <Route path="/group/:groupId/tag/:tag" element={<ProtectedRoute><RecipeListPage /></ProtectedRoute>} />
       <Route path="/group/:groupId/add-recipe" element={<ProtectedRoute><AddRecipePage /></ProtectedRoute>} />
       <Route path="/group/:groupId/recipe/:recipeId" element={<ProtectedRoute><RecipePage /></ProtectedRoute>} />
+      <Route path="/group/:groupId/recipe/:recipeId/edit" element={<ProtectedRoute><EditRecipePage /></ProtectedRoute>} />
     </Routes>
   )
 }

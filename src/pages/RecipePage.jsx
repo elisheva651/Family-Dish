@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react'
-import { useParams } from 'react-router-dom'
+import { useParams, useNavigate } from 'react-router-dom'
 import {
   doc, getDoc, collection, query, orderBy, onSnapshot,
-  addDoc, deleteDoc, serverTimestamp
+  addDoc, deleteDoc, serverTimestamp, getDocs
 } from 'firebase/firestore'
 import { db } from '../firebase'
 import { useAuth } from '../contexts/AuthContext'
@@ -12,6 +12,7 @@ import './RecipePage.css'
 export default function RecipePage() {
   const { groupId, recipeId } = useParams()
   const { user } = useAuth()
+  const navigate = useNavigate()
   const [recipe, setRecipe] = useState(null)
   const [author, setAuthor] = useState(null)
   const [comments, setComments] = useState([])
@@ -83,6 +84,22 @@ export default function RecipePage() {
     await deleteDoc(doc(db, 'recipes', recipeId, 'comments', commentId))
   }
 
+  const handleDeleteRecipe = async () => {
+    if (!confirm('Delete this recipe? This cannot be undone.')) return
+    try {
+      // Delete all comments first
+      const commentsSnap = await getDocs(collection(db, 'recipes', recipeId, 'comments'))
+      for (const commentDoc of commentsSnap.docs) {
+        await deleteDoc(commentDoc.ref)
+      }
+      // Delete the recipe
+      await deleteDoc(doc(db, 'recipes', recipeId))
+      navigate(`/group/${groupId}`, { replace: true })
+    } catch (error) {
+      console.error('Failed to delete recipe:', error)
+    }
+  }
+
   if (loading) return <div className="loading">Loading...</div>
   if (!recipe) return <div className="loading">Recipe not found</div>
 
@@ -100,6 +117,20 @@ export default function RecipePage() {
           </span>
         )}
       </div>
+
+      {isAuthor && (
+        <div className="recipe-actions">
+          <button
+            className="btn-edit-recipe"
+            onClick={() => navigate(`/group/${groupId}/recipe/${recipeId}/edit`)}
+          >
+            Edit Recipe
+          </button>
+          <button className="btn-delete-recipe" onClick={handleDeleteRecipe}>
+            Delete
+          </button>
+        </div>
+      )}
 
       <div className="group-tabs">
         <button

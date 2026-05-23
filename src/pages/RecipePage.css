@@ -20,6 +20,33 @@
   text-transform: capitalize;
 }
 
+.recipe-actions {
+  display: flex;
+  gap: 8px;
+  padding: 0 16px 8px;
+}
+
+.btn-edit-recipe {
+  flex: 1;
+  padding: 8px 16px;
+  background: rgba(255, 107, 107, 0.15);
+  color: var(--primary);
+  border: none;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.btn-delete-recipe {
+  padding: 8px 16px;
+  background: rgba(255, 71, 87, 0.15);
+  color: var(--danger);
+  border: none;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
 .recipe-content {
   padding: 20px 16px;
 }
