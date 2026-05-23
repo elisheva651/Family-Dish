@@ -1,0 +1,104 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Helper: check if user is signed in
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    // Helper: check if user is a member of the group
+    function isGroupMember(groupId) {
+      return request.auth.uid in get(/databases/$(database)/documents/groups/$(groupId)).data.memberIds;
+    }
+
+    // Helper: check if user is a manager of the group
+    function isGroupManager(groupId) {
+      return request.auth.uid in get(/databases/$(database)/documents/groups/$(groupId)).data.managerIds;
+    }
+
+    // Users collection
+    match /users/{userId} {
+      // Anyone signed in can read user profiles (needed for displaying names/avatars)
+      allow read: if isSignedIn();
+
+      // Users can create their own profile
+      allow create: if isSignedIn() && request.auth.uid == userId;
+
+      // Users can update their own profile
+      // Managers can also update other users' groupIds (when approving/removing)
+      allow update: if isSignedIn() && (
+        request.auth.uid == userId ||
+        // Allow groupIds-only updates from managers
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['groupIds'])
+      );
+    }
+
+    // Groups collection
+    match /groups/{groupId} {
+      // Any signed-in user can read groups (needed for search/join)
+      allow read: if isSignedIn();
+
+      // Any signed-in user can create a group (they become manager)
+      allow create: if isSignedIn()
+        && request.auth.uid in request.resource.data.managerIds
+        && request.auth.uid in request.resource.data.memberIds;
+
+      // Managers can update group info
+      // Members can update memberIds/managerIds (for leaving)
+      allow update: if isSignedIn() && (
+        request.auth.uid in resource.data.managerIds ||
+        request.auth.uid in resource.data.memberIds
+      );
+
+      // Join requests subcollection
+      match /joinRequests/{requestId} {
+        // Managers can read join requests
+        allow read: if isSignedIn() && isGroupManager(groupId);
+
+        // Any signed-in user can create a join request
+        allow create: if isSignedIn()
+          && request.resource.data.userId == request.auth.uid
+          && request.resource.data.status == 'pending';
+
+        // Managers can update request status (approve/reject)
+        allow update: if isSignedIn() && isGroupManager(groupId);
+      }
+    }
+
+    // Recipes collection
+    match /recipes/{recipeId} {
+      // Group members can read recipes
+      allow read: if isSignedIn() && isGroupMember(resource.data.groupId);
+
+      // Group members can create recipes (with their own authorId)
+      allow create: if isSignedIn()
+        && isGroupMember(request.resource.data.groupId)
+        && request.resource.data.authorId == request.auth.uid;
+
+      // Recipe author can update their recipe
+      allow update: if isSignedIn()
+        && resource.data.authorId == request.auth.uid;
+
+      // Recipe author or group manager can delete
+      allow delete: if isSignedIn() && (
+        resource.data.authorId == request.auth.uid ||
+        isGroupManager(resource.data.groupId)
+      );
+
+      // Comments subcollection
+      match /comments/{commentId} {
+        // Group members can read comments
+        allow read: if isSignedIn();
+
+        // Group members can create comments
+        allow create: if isSignedIn()
+          && request.resource.data.authorId == request.auth.uid;
+
+        // Comment author or recipe author can delete comments
+        allow delete: if isSignedIn();
+      }
+    }
+  }
+}
