@@ -1,0 +1,23 @@
+.floating-button {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: var(--primary);
+  color: white;
+  border: none;
+  font-size: 28px;
+  font-weight: bold;
+  box-shadow: 0 4px 12px rgba(255, 107, 107, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 20;
+}
+
+.floating-button:active {
+  background: var(--primary-light);
+  transform: scale(0.95);
+}
