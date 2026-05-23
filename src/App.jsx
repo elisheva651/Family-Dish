@@ -1,6 +1,8 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { AuthProvider, useAuth } from './contexts/AuthContext'
 import SignInPage from './pages/SignInPage'
+import HomePage from './pages/HomePage'
+import CreateGroupPage from './pages/CreateGroupPage'
 import './App.css'
 
 function ProtectedRoute({ children }) {
@@ -21,7 +23,8 @@ function AppRoutes() {
   return (
     <Routes>
       <Route path="/signin" element={<PublicRoute><SignInPage /></PublicRoute>} />
-      <Route path="/" element={<ProtectedRoute><div>Home (coming soon)</div></ProtectedRoute>} />
+      <Route path="/" element={<ProtectedRoute><HomePage /></ProtectedRoute>} />
+      <Route path="/create-group" element={<ProtectedRoute><CreateGroupPage /></ProtectedRoute>} />
     </Routes>
   )
 }
