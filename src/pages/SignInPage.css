@@ -44,3 +44,13 @@
 .signin-button.google:active {
   background: #3367d6;
 }
+
+.signin-button:disabled {
+  opacity: 0.6;
+}
+
+.signin-error {
+  color: var(--danger);
+  margin-bottom: 16px;
+  font-size: 14px;
+}

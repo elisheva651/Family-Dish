@@ -17,25 +17,28 @@ export function AuthProvider({ children }) {
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
-      if (firebaseUser) {
-        const userRef = doc(db, 'users', firebaseUser.uid)
-        const userSnap = await getDoc(userRef)
-        if (!userSnap.exists()) {
-          await setDoc(userRef, {
-            uid: firebaseUser.uid,
-            displayName: firebaseUser.displayName || '',
-            email: firebaseUser.email || '',
-            photoURL: firebaseUser.photoURL || '',
-            groupIds: [],
-          })
+      try {
+        if (firebaseUser) {
+          const userRef = doc(db, 'users', firebaseUser.uid)
+          const userSnap = await getDoc(userRef)
+          if (!userSnap.exists()) {
+            const userData = {
+              uid: firebaseUser.uid,
+              displayName: firebaseUser.displayName || '',
+              email: firebaseUser.email || '',
+              photoURL: firebaseUser.photoURL || '',
+              groupIds: [],
+            }
+            await setDoc(userRef, userData)
+            setUser(userData)
+          } else {
+            setUser({ uid: firebaseUser.uid, ...userSnap.data() })
+          }
+        } else {
+          setUser(null)
         }
-        setUser({ uid: firebaseUser.uid, ...userSnap.data(), ...(!userSnap.exists() && {
-          displayName: firebaseUser.displayName || '',
-          email: firebaseUser.email || '',
-          photoURL: firebaseUser.photoURL || '',
-          groupIds: [],
-        }) })
-      } else {
+      } catch (error) {
+        console.error('Auth state change error:', error)
         setUser(null)
       }
       setLoading(false)
