@@ -1,0 +1,56 @@
+.signin-page {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100dvh;
+  padding: 24px;
+}
+
+.signin-content {
+  text-align: center;
+}
+
+.signin-logo {
+  font-size: 64px;
+  margin-bottom: 16px;
+}
+
+.signin-content h1 {
+  font-size: 32px;
+  margin-bottom: 8px;
+}
+
+.signin-subtitle {
+  color: var(--text-muted);
+  margin-bottom: 40px;
+  font-size: 16px;
+}
+
+.signin-button {
+  display: block;
+  width: 100%;
+  padding: 14px 24px;
+  border: none;
+  border-radius: 12px;
+  font-size: 16px;
+  font-weight: 600;
+  color: white;
+}
+
+.signin-button.google {
+  background: #4285f4;
+}
+
+.signin-button.google:active {
+  background: #3367d6;
+}
+
+.signin-button:disabled {
+  opacity: 0.6;
+}
+
+.signin-error {
+  color: var(--danger);
+  margin-bottom: 16px;
+  font-size: 14px;
+}
