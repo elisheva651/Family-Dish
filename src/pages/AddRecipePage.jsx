@@ -1,8 +1,9 @@
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore'
 import { db } from '../firebase'
 import { useAuth } from '../contexts/AuthContext'
+import { extractRecipeFromImages, getErrorMessage } from '../utils/gemini'
 import Header from '../components/Header'
 import './AddRecipePage.css'
 
@@ -10,12 +11,19 @@ export default function AddRecipePage() {
   const { groupId } = useParams()
   const { user } = useAuth()
   const navigate = useNavigate()
+  const fileInputRef = useRef(null)
+
   const [title, setTitle] = useState('')
   const [ingredients, setIngredients] = useState('')
   const [instructions, setInstructions] = useState('')
   const [tagInput, setTagInput] = useState('')
   const [tags, setTags] = useState([])
   const [saving, setSaving] = useState(false)
+
+  // Image scanner state
+  const [selectedImages, setSelectedImages] = useState([])
+  const [scanning, setScanning] = useState(false)
+  const [scanError, setScanError] = useState('')
 
   const addTag = () => {
     const tag = tagInput.trim().toLowerCase()
@@ -33,6 +41,41 @@ export default function AddRecipePage() {
     if (e.key === 'Enter') {
       e.preventDefault()
       addTag()
+    }
+  }
+
+  const handleImageSelect = (e) => {
+    const files = Array.from(e.target.files)
+    if (files.length) {
+      setSelectedImages(prev => [...prev, ...files])
+      setScanError('')
+    }
+    // Reset input so same file can be re-selected
+    e.target.value = ''
+  }
+
+  const removeImage = (index) => {
+    setSelectedImages(prev => prev.filter((_, i) => i !== index))
+  }
+
+  const handleScan = async () => {
+    const hasContent = title.trim() || ingredients.trim() || instructions.trim()
+    if (hasContent && !window.confirm('This will replace what you\'ve typed. Continue?')) {
+      return
+    }
+
+    setScanning(true)
+    setScanError('')
+    try {
+      const recipe = await extractRecipeFromImages(selectedImages)
+      setTitle(recipe.title)
+      setIngredients(recipe.ingredients)
+      setInstructions(recipe.instructions)
+      setSelectedImages([])
+    } catch (error) {
+      setScanError(getErrorMessage(error))
+    } finally {
+      setScanning(false)
     }
   }
 
@@ -75,6 +118,70 @@ export default function AddRecipePage() {
       />
 
       <form className="recipe-form" onSubmit={handleSubmit}>
+        {/* Image Scanner Section */}
+        <div className="scan-section">
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            multiple
+            onChange={handleImageSelect}
+            hidden
+          />
+
+          <button
+            type="button"
+            className="btn-scan"
+            onClick={() => fileInputRef.current.click()}
+            disabled={scanning}
+          >
+            <span className="btn-scan-icon">📷</span>
+            Scan Recipe from Image
+          </button>
+
+          {selectedImages.length > 0 && (
+            <>
+              <div className="image-preview-strip">
+                {selectedImages.map((file, index) => (
+                  <div key={index} className="preview-thumb">
+                    <img src={URL.createObjectURL(file)} alt={`Selected ${index + 1}`} />
+                    <button
+                      type="button"
+                      className="preview-remove"
+                      onClick={() => removeImage(index)}
+                    >
+                      ×
+                    </button>
+                  </div>
+                ))}
+                <button
+                  type="button"
+                  className="btn-add-more"
+                  onClick={() => fileInputRef.current.click()}
+                >
+                  +
+                </button>
+              </div>
+
+              <button
+                type="button"
+                className="btn-read-recipe"
+                onClick={handleScan}
+                disabled={scanning}
+              >
+                {scanning ? 'Reading recipe...' : 'Read Recipe'}
+              </button>
+            </>
+          )}
+
+          {scanError && <p className="scan-error">{scanError}</p>}
+        </div>
+
+        <div className="scan-divider">
+          <span>or enter manually</span>
+        </div>
+
+        {/* Existing form fields */}
         <label className="form-label">
           Recipe Name
           <input

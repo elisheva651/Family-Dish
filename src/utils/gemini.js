@@ -32,7 +32,7 @@ export async function extractRecipeFromImages(files) {
 
   const imageParts = await Promise.all(files.map(fileToBase64))
 
-  const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' })
+  const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' })
   const result = await model.generateContent([PROMPT, ...imageParts])
   const text = result.response.text()
 
@@ -52,6 +52,7 @@ export async function extractRecipeFromImages(files) {
 }
 
 export function getErrorMessage(error) {
+  console.error('Gemini error:', error, error?.message, error?.status)
   if (error?.message === 'PARSE_ERROR') {
     return "Couldn't read the recipe. Try a clearer image."
   }
