@@ -1,14 +1,17 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { doc, getDoc, updateDoc } from 'firebase/firestore'
+import { doc, getDoc, updateDoc, deleteField } from 'firebase/firestore'
 import { db } from '../firebase'
 import { useAuth } from '../contexts/AuthContext'
+import { useLanguage } from '../contexts/LanguageContext'
+import { detectLanguage } from '../utils/translate'
 import Header from '../components/Header'
 import './AddRecipePage.css'
 
 export default function EditRecipePage() {
   const { groupId, recipeId } = useParams()
   const { user } = useAuth()
+  const { t } = useLanguage()
   const navigate = useNavigate()
   const [title, setTitle] = useState('')
   const [ingredients, setIngredients] = useState('')
@@ -45,7 +48,7 @@ export default function EditRecipePage() {
   }
 
   const removeTag = (tagToRemove) => {
-    setTags(tags.filter(t => t !== tagToRemove))
+    setTags(tags.filter(tg => tg !== tagToRemove))
   }
 
   const handleTagKeyDown = (e) => {
@@ -60,11 +63,22 @@ export default function EditRecipePage() {
     if (!title.trim() || saving) return
     setSaving(true)
     try {
+      const textForDetection = title.trim() + ' ' + ingredients.trim().slice(0, 100)
+      let originalLanguage = 'en'
+      try {
+        const detected = await detectLanguage(textForDetection)
+        originalLanguage = detected === 'he' ? 'he' : 'en'
+      } catch {
+        // Default to 'en' if detection fails
+      }
+
       await updateDoc(doc(db, 'recipes', recipeId), {
         title: title.trim(),
         ingredients: ingredients.trim(),
         instructions: instructions.trim(),
         tags,
+        originalLanguage,
+        translations: deleteField(),
       })
       navigate(`/group/${groupId}/recipe/${recipeId}`, { replace: true })
     } catch (error) {
@@ -73,12 +87,12 @@ export default function EditRecipePage() {
     }
   }
 
-  if (loading) return <div className="loading">Loading...</div>
+  if (loading) return <div className="loading">{t('app.loading')}</div>
 
   return (
     <div className="add-recipe-page">
       <Header
-        title="Edit Recipe"
+        title={t('editRecipe.title')}
         showBack
         rightAction={
           <button
@@ -86,18 +100,18 @@ export default function EditRecipePage() {
             onClick={handleSubmit}
             disabled={!title.trim() || saving}
           >
-            {saving ? 'Saving...' : 'Save'}
+            {saving ? t('addRecipe.saving') : t('addRecipe.save')}
           </button>
         }
       />
 
       <form className="recipe-form" onSubmit={handleSubmit}>
         <label className="form-label">
-          Recipe Name
+          {t('addRecipe.nameLabel')}
           <input
             className="form-input"
             type="text"
-            placeholder="e.g. Grandma's Challah"
+            placeholder={t('addRecipe.namePlaceholder')}
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             autoFocus
@@ -105,10 +119,10 @@ export default function EditRecipePage() {
         </label>
 
         <label className="form-label">
-          Ingredients
+          {t('addRecipe.ingredientsLabel')}
           <textarea
             className="form-textarea"
-            placeholder={"Write each ingredient on a new line..."}
+            placeholder={t('addRecipe.ingredientsPlaceholder')}
             value={ingredients}
             onChange={(e) => setIngredients(e.target.value)}
             rows={6}
@@ -116,10 +130,10 @@ export default function EditRecipePage() {
         </label>
 
         <label className="form-label">
-          Instructions
+          {t('addRecipe.instructionsLabel')}
           <textarea
             className="form-textarea"
-            placeholder={"Write the steps..."}
+            placeholder={t('addRecipe.instructionsPlaceholder')}
             value={instructions}
             onChange={(e) => setInstructions(e.target.value)}
             rows={6}
@@ -127,18 +141,18 @@ export default function EditRecipePage() {
         </label>
 
         <div className="form-label">
-          Tags (optional)
+          {t('addRecipe.tagsLabel')}
           <div className="tags-input-row">
             <input
               className="form-input"
               type="text"
-              placeholder="e.g. dessert"
+              placeholder={t('addRecipe.tagPlaceholder')}
               value={tagInput}
               onChange={(e) => setTagInput(e.target.value)}
               onKeyDown={handleTagKeyDown}
             />
             <button type="button" className="btn-tag-add" onClick={addTag}>
-              + Add
+              {t('addRecipe.addTag')}
             </button>
           </div>
           {tags.length > 0 && (

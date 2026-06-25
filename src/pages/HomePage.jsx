@@ -3,11 +3,13 @@ import { useNavigate } from 'react-router-dom'
 import { collection, query, where, getDocs } from 'firebase/firestore'
 import { db } from '../firebase'
 import { useAuth } from '../contexts/AuthContext'
+import { useLanguage } from '../contexts/LanguageContext'
 import Header from '../components/Header'
 import './HomePage.css'
 
 export default function HomePage() {
   const { user, logOut } = useAuth()
+  const { t } = useLanguage()
   const navigate = useNavigate()
   const [groups, setGroups] = useState([])
   const [loading, setLoading] = useState(true)
@@ -33,21 +35,21 @@ export default function HomePage() {
   return (
     <div className="home-page">
       <Header
-        title="Family Dish"
+        title={t('app.name')}
         rightAction={
           <button className="header-logout" onClick={logOut}>
-            Sign out
+            {t('home.signOut')}
           </button>
         }
       />
 
       {loading ? (
-        <div className="home-loading">Loading groups...</div>
+        <div className="home-loading">{t('home.loadingGroups')}</div>
       ) : groups.length === 0 ? (
         <div className="home-empty">
           <div className="home-empty-icon">🍽️</div>
-          <p>No groups yet</p>
-          <p className="home-empty-sub">Create a group or join one to start sharing recipes!</p>
+          <p>{t('home.noGroups')}</p>
+          <p className="home-empty-sub">{t('home.noGroupsSub')}</p>
         </div>
       ) : (
         <div className="group-list">
@@ -66,7 +68,7 @@ export default function HomePage() {
               <div className="group-card-info">
                 <div className="group-card-name">{group.name}</div>
                 <div className="group-card-meta">
-                  {group.memberIds?.length || 0} members
+                  {group.memberIds?.length || 0} {t('home.members')}
                 </div>
               </div>
               <span className="group-card-arrow">›</span>
@@ -77,10 +79,10 @@ export default function HomePage() {
 
       <div className="home-actions">
         <button className="btn-primary" onClick={() => navigate('/create-group')}>
-          + Create Group
+          {t('home.createGroup')}
         </button>
         <button className="btn-secondary" onClick={() => navigate('/join-group')}>
-          Join Group
+          {t('home.joinGroup')}
         </button>
       </div>
     </div>
