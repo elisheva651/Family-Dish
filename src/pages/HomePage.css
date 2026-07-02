@@ -45,7 +45,7 @@
   border-radius: 12px;
   color: var(--text);
   margin-bottom: 8px;
-  text-align: left;
+  text-align: start;
 }
 
 .group-card:active {

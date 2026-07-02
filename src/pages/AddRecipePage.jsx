@@ -3,13 +3,16 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore'
 import { db } from '../firebase'
 import { useAuth } from '../contexts/AuthContext'
+import { useLanguage } from '../contexts/LanguageContext'
 import { extractRecipeFromImages, getErrorMessage } from '../utils/gemini'
+import { detectLanguage } from '../utils/translate'
 import Header from '../components/Header'
 import './AddRecipePage.css'
 
 export default function AddRecipePage() {
   const { groupId } = useParams()
   const { user } = useAuth()
+  const { t } = useLanguage()
   const navigate = useNavigate()
   const fileInputRef = useRef(null)
 
@@ -20,7 +23,6 @@ export default function AddRecipePage() {
   const [tags, setTags] = useState([])
   const [saving, setSaving] = useState(false)
 
-  // Image scanner state
   const [selectedImages, setSelectedImages] = useState([])
   const [scanning, setScanning] = useState(false)
   const [scanError, setScanError] = useState('')
@@ -34,7 +36,7 @@ export default function AddRecipePage() {
   }
 
   const removeTag = (tagToRemove) => {
-    setTags(tags.filter(t => t !== tagToRemove))
+    setTags(tags.filter(tg => tg !== tagToRemove))
   }
 
   const handleTagKeyDown = (e) => {
@@ -50,7 +52,6 @@ export default function AddRecipePage() {
       setSelectedImages(prev => [...prev, ...files])
       setScanError('')
     }
-    // Reset input so same file can be re-selected
     e.target.value = ''
   }
 
@@ -60,7 +61,7 @@ export default function AddRecipePage() {
 
   const handleScan = async () => {
     const hasContent = title.trim() || ingredients.trim() || instructions.trim()
-    if (hasContent && !window.confirm('This will replace what you\'ve typed. Continue?')) {
+    if (hasContent && !window.confirm(t('addRecipe.replaceConfirm'))) {
       return
     }
 
@@ -84,6 +85,15 @@ export default function AddRecipePage() {
     if (!title.trim() || saving) return
     setSaving(true)
     try {
+      const textForDetection = title.trim() + ' ' + ingredients.trim().slice(0, 100)
+      let originalLanguage = 'en'
+      try {
+        const detected = await detectLanguage(textForDetection)
+        originalLanguage = detected === 'he' ? 'he' : 'en'
+      } catch {
+        // Default to 'en' if detection fails
+      }
+
       const recipeRef = await addDoc(collection(db, 'recipes'), {
         groupId,
         authorId: user.uid,
@@ -92,6 +102,7 @@ export default function AddRecipePage() {
         instructions: instructions.trim(),
         photoURL: '',
         tags,
+        originalLanguage,
         createdAt: serverTimestamp(),
       })
       navigate(`/group/${groupId}/recipe/${recipeRef.id}`, { replace: true })
@@ -104,7 +115,7 @@ export default function AddRecipePage() {
   return (
     <div className="add-recipe-page">
       <Header
-        title="New Recipe"
+        title={t('addRecipe.title')}
         showBack
         rightAction={
           <button
@@ -112,13 +123,12 @@ export default function AddRecipePage() {
             onClick={handleSubmit}
             disabled={!title.trim() || saving}
           >
-            {saving ? 'Saving...' : 'Save'}
+            {saving ? t('addRecipe.saving') : t('addRecipe.save')}
           </button>
         }
       />
 
       <form className="recipe-form" onSubmit={handleSubmit}>
-        {/* Image Scanner Section */}
         <div className="scan-section">
           <input
             ref={fileInputRef}
@@ -136,7 +146,7 @@ export default function AddRecipePage() {
             disabled={scanning}
           >
             <span className="btn-scan-icon">📷</span>
-            Scan Recipe from Image
+            {t('addRecipe.scanButton')}
           </button>
 
           {selectedImages.length > 0 && (
@@ -169,7 +179,7 @@ export default function AddRecipePage() {
                 onClick={handleScan}
                 disabled={scanning}
               >
-                {scanning ? 'Reading recipe...' : 'Read Recipe'}
+                {scanning ? t('addRecipe.reading') : t('addRecipe.readRecipe')}
               </button>
             </>
           )}
@@ -178,16 +188,15 @@ export default function AddRecipePage() {
         </div>
 
         <div className="scan-divider">
-          <span>or enter manually</span>
+          <span>{t('addRecipe.orManual')}</span>
         </div>
 
-        {/* Existing form fields */}
         <label className="form-label">
-          Recipe Name
+          {t('addRecipe.nameLabel')}
           <input
             className="form-input"
             type="text"
-            placeholder="e.g. Grandma's Challah"
+            placeholder={t('addRecipe.namePlaceholder')}
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             autoFocus
@@ -195,10 +204,10 @@ export default function AddRecipePage() {
         </label>
 
         <label className="form-label">
-          Ingredients
+          {t('addRecipe.ingredientsLabel')}
           <textarea
             className="form-textarea"
-            placeholder={"Write each ingredient on a new line...\n\ne.g.\n4 cups flour\n2 eggs\n1/3 cup sugar"}
+            placeholder={t('addRecipe.ingredientsPlaceholder')}
             value={ingredients}
             onChange={(e) => setIngredients(e.target.value)}
             rows={6}
@@ -206,10 +215,10 @@ export default function AddRecipePage() {
         </label>
 
         <label className="form-label">
-          Instructions
+          {t('addRecipe.instructionsLabel')}
           <textarea
             className="form-textarea"
-            placeholder={"Write the steps...\n\ne.g.\n1. Mix yeast with warm water\n2. Add eggs and flour\n3. Knead for 10 minutes"}
+            placeholder={t('addRecipe.instructionsPlaceholder')}
             value={instructions}
             onChange={(e) => setInstructions(e.target.value)}
             rows={6}
@@ -217,18 +226,18 @@ export default function AddRecipePage() {
         </label>
 
         <div className="form-label">
-          Tags (optional)
+          {t('addRecipe.tagsLabel')}
           <div className="tags-input-row">
             <input
               className="form-input"
               type="text"
-              placeholder="e.g. dessert"
+              placeholder={t('addRecipe.tagPlaceholder')}
               value={tagInput}
               onChange={(e) => setTagInput(e.target.value)}
               onKeyDown={handleTagKeyDown}
             />
             <button type="button" className="btn-tag-add" onClick={addTag}>
-              + Add
+              {t('addRecipe.addTag')}
             </button>
           </div>
           {tags.length > 0 && (

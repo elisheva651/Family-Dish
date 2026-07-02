@@ -78,8 +78,12 @@ service cloud.firestore {
         && request.resource.data.authorId == request.auth.uid;
 
       // Recipe author can update their recipe
-      allow update: if isSignedIn()
-        && resource.data.authorId == request.auth.uid;
+      // Any group member can write translations and originalLanguage (for translation caching)
+      allow update: if isSignedIn() && (
+        resource.data.authorId == request.auth.uid ||
+        (isGroupMember(resource.data.groupId) &&
+         request.resource.data.diff(resource.data).affectedKeys().hasOnly(['translations', 'originalLanguage']))
+      );
 
       // Recipe author or group manager can delete
       allow delete: if isSignedIn() && (

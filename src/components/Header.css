@@ -37,3 +37,33 @@
 .header-right {
   flex-shrink: 0;
 }
+
+.header-right-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.lang-toggle {
+  display: inline-flex;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 2px;
+  font-size: 13px;
+  gap: 0;
+}
+
+.lang-option {
+  padding: 4px 10px;
+  border-radius: 14px;
+  color: var(--text-muted);
+  transition: all 0.2s;
+  font-weight: 600;
+}
+
+.lang-option.active {
+  background: var(--primary);
+  color: white;
+}

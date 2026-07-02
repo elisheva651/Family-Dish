@@ -3,12 +3,14 @@ import { useNavigate } from 'react-router-dom'
 import { collection, addDoc, doc, updateDoc, arrayUnion, serverTimestamp } from 'firebase/firestore'
 import { db } from '../firebase'
 import { useAuth } from '../contexts/AuthContext'
+import { useLanguage } from '../contexts/LanguageContext'
 import { generateInviteCode } from '../utils/inviteCode'
 import Header from '../components/Header'
 import './CreateGroupPage.css'
 
 export default function CreateGroupPage() {
   const { user, refreshUser } = useAuth()
+  const { t } = useLanguage()
   const navigate = useNavigate()
   const [name, setName] = useState('')
   const [description, setDescription] = useState('')
@@ -40,14 +42,14 @@ export default function CreateGroupPage() {
 
   return (
     <div className="create-group-page">
-      <Header title="Create Group" showBack />
+      <Header title={t('createGroup.title')} showBack />
       <form className="create-group-form" onSubmit={handleSubmit}>
         <label className="form-label">
-          Group Name
+          {t('createGroup.nameLabel')}
           <input
             className="form-input"
             type="text"
-            placeholder="e.g. Morgenstern Family"
+            placeholder={t('createGroup.namePlaceholder')}
             value={name}
             onChange={(e) => setName(e.target.value)}
             autoFocus
@@ -55,10 +57,10 @@ export default function CreateGroupPage() {
         </label>
 
         <label className="form-label">
-          Description (optional)
+          {t('createGroup.descLabel')}
           <textarea
             className="form-textarea"
-            placeholder="What's this group about?"
+            placeholder={t('createGroup.descPlaceholder')}
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             rows={3}
@@ -66,7 +68,7 @@ export default function CreateGroupPage() {
         </label>
 
         <button className="btn-primary" type="submit" disabled={!name.trim() || saving}>
-          {saving ? 'Creating...' : 'Create Group'}
+          {saving ? t('createGroup.creating') : t('createGroup.submit')}
         </button>
       </form>
     </div>

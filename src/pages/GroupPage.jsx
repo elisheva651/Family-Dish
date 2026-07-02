@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { doc, getDoc, collection, query, where, getDocs } from 'firebase/firestore'
 import { db } from '../firebase'
 import { useAuth } from '../contexts/AuthContext'
+import { useLanguage } from '../contexts/LanguageContext'
 import Header from '../components/Header'
 import FloatingButton from '../components/FloatingButton'
 import './GroupPage.css'
@@ -10,6 +11,7 @@ import './GroupPage.css'
 export default function GroupPage() {
   const { groupId } = useParams()
   const { user } = useAuth()
+  const { t } = useLanguage()
   const navigate = useNavigate()
   const [group, setGroup] = useState(null)
   const [members, setMembers] = useState([])
@@ -53,8 +55,8 @@ export default function GroupPage() {
     return acc
   }, {})
 
-  if (loading) return <div className="loading">Loading...</div>
-  if (!group) return <div className="loading">Group not found</div>
+  if (loading) return <div className="loading">{t('app.loading')}</div>
+  if (!group) return <div className="loading">{t('group.notFound')}</div>
 
   return (
     <div className="group-page">
@@ -76,13 +78,13 @@ export default function GroupPage() {
           className={`group-tab ${activeTab === 'people' ? 'active' : ''}`}
           onClick={() => setActiveTab('people')}
         >
-          People
+          {t('group.people')}
         </button>
         <button
           className={`group-tab ${activeTab === 'categories' ? 'active' : ''}`}
           onClick={() => setActiveTab('categories')}
         >
-          Categories
+          {t('group.categories')}
         </button>
       </div>
 
@@ -101,9 +103,9 @@ export default function GroupPage() {
                   <span>{(member.displayName || '?')[0].toUpperCase()}</span>
                 )}
               </div>
-              <div className="member-name">{member.displayName || 'Anonymous'}</div>
+              <div className="member-name">{member.displayName || t('recipe.anonymous')}</div>
               <div className="member-recipe-count">
-                {recipeCounts[member.uid] || 0} recipes
+                {recipeCounts[member.uid] || 0} {t('group.recipes')}
               </div>
             </button>
           ))}
@@ -113,7 +115,7 @@ export default function GroupPage() {
       {activeTab === 'categories' && (
         <div className="categories-list">
           {Object.keys(tagCounts).length === 0 ? (
-            <p className="categories-empty">No categories yet. Add tags when creating recipes!</p>
+            <p className="categories-empty">{t('group.noCategories')}</p>
           ) : (
             Object.entries(tagCounts)
               .sort((a, b) => b[1] - a[1])
@@ -124,7 +126,7 @@ export default function GroupPage() {
                   onClick={() => navigate(`/group/${groupId}/tag/${encodeURIComponent(tag)}`)}
                 >
                   <span className="category-name">{tag}</span>
-                  <span className="category-count">{count} recipes</span>
+                  <span className="category-count">{count} {t('group.recipes')}</span>
                 </button>
               ))
           )}

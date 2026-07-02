@@ -3,11 +3,13 @@ import { useNavigate } from 'react-router-dom'
 import { collection, query, where, getDocs, addDoc, serverTimestamp } from 'firebase/firestore'
 import { db } from '../firebase'
 import { useAuth } from '../contexts/AuthContext'
+import { useLanguage } from '../contexts/LanguageContext'
 import Header from '../components/Header'
 import './JoinGroupPage.css'
 
 export default function JoinGroupPage() {
   const { user } = useAuth()
+  const { t } = useLanguage()
   const navigate = useNavigate()
   const [search, setSearch] = useState('')
   const [results, setResults] = useState([])
@@ -58,23 +60,23 @@ export default function JoinGroupPage() {
 
   return (
     <div className="join-group-page">
-      <Header title="Join Group" showBack />
+      <Header title={t('joinGroup.title')} showBack />
 
       <div className="join-content">
         <form className="search-form" onSubmit={handleSearch}>
           <input
             className="form-input"
             type="text"
-            placeholder="Search group by name..."
+            placeholder={t('joinGroup.searchPlaceholder')}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             autoFocus
           />
-          <button className="btn-primary" type="submit">Search</button>
+          <button className="btn-primary" type="submit">{t('joinGroup.search')}</button>
         </form>
 
         {searched && results.length === 0 && (
-          <p className="join-empty">No groups found with that name</p>
+          <p className="join-empty">{t('joinGroup.noResults')}</p>
         )}
 
         {results.length > 0 && !selectedGroup && (
@@ -94,7 +96,7 @@ export default function JoinGroupPage() {
                 <div className="group-card-info">
                   <div className="group-card-name">{group.name}</div>
                   <div className="group-card-meta">
-                    {group.memberIds?.length || 0} members
+                    {group.memberIds?.length || 0} {t('home.members')}
                   </div>
                 </div>
               </button>
@@ -105,12 +107,12 @@ export default function JoinGroupPage() {
         {selectedGroup && status !== 'sent' && (
           <div className="invite-code-section">
             <p className="invite-code-label">
-              Enter the invite code for <strong>{selectedGroup.name}</strong>
+              {t('joinGroup.enterCode')} <strong>{selectedGroup.name}</strong>
             </p>
             <input
               className="form-input invite-code-input"
               type="text"
-              placeholder="e.g. K7MX2P"
+              placeholder={t('joinGroup.codePlaceholder')}
               value={inviteCode}
               onChange={(e) => {
                 setInviteCode(e.target.value.toUpperCase())
@@ -120,20 +122,20 @@ export default function JoinGroupPage() {
               autoFocus
             />
             {status === 'wrong-code' && (
-              <p className="join-error">Wrong invite code. Try again.</p>
+              <p className="join-error">{t('joinGroup.wrongCode')}</p>
             )}
             {status === 'already-member' && (
-              <p className="join-error">You're already a member of this group.</p>
+              <p className="join-error">{t('joinGroup.alreadyMember')}</p>
             )}
             {status === 'error' && (
-              <p className="join-error">Something went wrong. Please try again.</p>
+              <p className="join-error">{t('joinGroup.error')}</p>
             )}
             <button
               className="btn-primary"
               onClick={handleJoinRequest}
               disabled={inviteCode.length !== 6 || status === 'sending'}
             >
-              {status === 'sending' ? 'Sending...' : 'Request to Join'}
+              {status === 'sending' ? t('joinGroup.sending') : t('joinGroup.requestToJoin')}
             </button>
           </div>
         )}
@@ -141,12 +143,10 @@ export default function JoinGroupPage() {
         {status === 'sent' && (
           <div className="join-success">
             <div className="join-success-icon">✓</div>
-            <p>Request sent!</p>
-            <p className="join-success-sub">
-              The group manager will review your request. You'll see the group on your home screen once approved.
-            </p>
+            <p>{t('joinGroup.requestSent')}</p>
+            <p className="join-success-sub">{t('joinGroup.requestSentSub')}</p>
             <button className="btn-secondary" onClick={() => navigate('/')}>
-              Back to Home
+              {t('joinGroup.backToHome')}
             </button>
           </div>
         )}
