@@ -204,3 +204,72 @@
   border-radius: 8px;
   margin-bottom: 12px;
 }
+
+.recipe-meta-category {
+  padding: 4px 12px;
+  background: rgba(255, 107, 107, 0.15);
+  border-radius: 20px;
+  color: var(--primary);
+  font-size: 13px;
+  text-transform: capitalize;
+}
+
+/* Shown to the owner of a dish saved before categories existed */
+.category-prompt {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  margin: 0 16px 16px;
+  padding: 14px 16px;
+  background: var(--bg-card);
+  border: 1px dashed var(--primary);
+  border-radius: 14px;
+}
+
+.category-prompt > .category-picker {
+  width: 100%;
+}
+
+.category-prompt-text {
+  flex: 1;
+  color: var(--text-muted);
+  font-size: 14px;
+}
+
+.category-prompt-error {
+  width: 100%;
+  margin: 0;
+  color: var(--danger);
+  font-size: 13px;
+}
+
+.category-prompt-actions {
+  display: flex;
+  gap: 10px;
+  width: 100%;
+}
+
+.btn-category-choose,
+.btn-category-save {
+  padding: 10px 16px;
+  background: var(--primary);
+  border: none;
+  border-radius: 10px;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.btn-category-save:disabled {
+  opacity: 0.5;
+}
+
+.btn-category-cancel {
+  padding: 10px 16px;
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  color: var(--text-muted);
+  font-size: 14px;
+}

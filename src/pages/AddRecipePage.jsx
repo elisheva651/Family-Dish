@@ -1,12 +1,14 @@
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { collection, addDoc, serverTimestamp } from 'firebase/firestore'
+import { collection, addDoc, serverTimestamp, query, where, getDocs } from 'firebase/firestore'
 import { db } from '../firebase'
 import { useAuth } from '../contexts/AuthContext'
 import { useLanguage } from '../contexts/LanguageContext'
 import { extractRecipeFromImages, getErrorMessage } from '../utils/gemini'
 import { detectLanguage } from '../utils/translate'
 import Header from '../components/Header'
+import CategoryPicker from '../components/CategoryPicker'
+import { collectCustomCategories, resolveCategoryInput, canSaveRecipe } from '../utils/categories'
 import './AddRecipePage.css'
 
 export default function AddRecipePage() {
@@ -19,32 +21,25 @@ export default function AddRecipePage() {
   const [title, setTitle] = useState('')
   const [ingredients, setIngredients] = useState('')
   const [instructions, setInstructions] = useState('')
-  const [tagInput, setTagInput] = useState('')
-  const [tags, setTags] = useState([])
+  const [category, setCategory] = useState(null)
+  const [suggestions, setSuggestions] = useState([])
   const [saving, setSaving] = useState(false)
 
   const [selectedImages, setSelectedImages] = useState([])
   const [scanning, setScanning] = useState(false)
   const [scanError, setScanError] = useState('')
 
-  const addTag = () => {
-    const tag = tagInput.trim().toLowerCase()
-    if (tag && !tags.includes(tag)) {
-      setTags([...tags, tag])
+  // Custom categories the group already uses, so the family converges on the
+  // same names instead of each person inventing their own.
+  useEffect(() => {
+    async function fetchSuggestions() {
+      const snap = await getDocs(
+        query(collection(db, 'recipes'), where('groupId', '==', groupId))
+      )
+      setSuggestions(collectCustomCategories(snap.docs.map(d => d.data())))
     }
-    setTagInput('')
-  }
-
-  const removeTag = (tagToRemove) => {
-    setTags(tags.filter(tg => tg !== tagToRemove))
-  }
-
-  const handleTagKeyDown = (e) => {
-    if (e.key === 'Enter') {
-      e.preventDefault()
-      addTag()
-    }
-  }
+    fetchSuggestions().catch(err => console.error('Failed to load categories:', err))
+  }, [groupId])
 
   const handleImageSelect = (e) => {
     const files = Array.from(e.target.files)
@@ -82,7 +77,7 @@ export default function AddRecipePage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault()
-    if (!title.trim() || saving) return
+    if (!canSaveRecipe({ title, category }) || saving) return
     setSaving(true)
     try {
       const textForDetection = title.trim() + ' ' + ingredients.trim().slice(0, 100)
@@ -101,7 +96,7 @@ export default function AddRecipePage() {
         ingredients: ingredients.trim(),
         instructions: instructions.trim(),
         photoURL: '',
-        tags,
+        category: resolveCategoryInput(category),
         originalLanguage,
         createdAt: serverTimestamp(),
       })
@@ -121,7 +116,7 @@ export default function AddRecipePage() {
           <button
             className="header-save"
             onClick={handleSubmit}
-            disabled={!title.trim() || saving}
+            disabled={!canSaveRecipe({ title, category }) || saving}
           >
             {saving ? t('addRecipe.saving') : t('addRecipe.save')}
           </button>
@@ -226,32 +221,8 @@ export default function AddRecipePage() {
         </label>
 
         <div className="form-label">
-          {t('addRecipe.tagsLabel')}
-          <div className="tags-input-row">
-            <input
-              className="form-input"
-              type="text"
-              placeholder={t('addRecipe.tagPlaceholder')}
-              value={tagInput}
-              onChange={(e) => setTagInput(e.target.value)}
-              onKeyDown={handleTagKeyDown}
-            />
-            <button type="button" className="btn-tag-add" onClick={addTag}>
-              {t('addRecipe.addTag')}
-            </button>
-          </div>
-          {tags.length > 0 && (
-            <div className="tags-list">
-              {tags.map(tag => (
-                <span key={tag} className="tag-chip">
-                  {tag}
-                  <button type="button" className="tag-remove" onClick={() => removeTag(tag)}>
-                    ×
-                  </button>
-                </span>
-              ))}
-            </div>
-          )}
+          {t('category.label')} <span className="form-required">{t('category.required')}</span>
+          <CategoryPicker value={category} onChange={setCategory} suggestions={suggestions} />
         </div>
       </form>
     </div>

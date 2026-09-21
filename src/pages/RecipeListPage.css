@@ -64,3 +64,85 @@
   border-radius: 10px;
   text-transform: capitalize;
 }
+
+/* Categories a person cooks - tap a heading to open the dishes inside */
+.category-accordion {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 16px;
+}
+
+.accordion-section {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  overflow: hidden;
+}
+
+.accordion-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 14px 16px;
+  background: none;
+  border: none;
+  color: var(--text);
+  font-size: 16px;
+  text-align: start;
+}
+
+.accordion-arrow {
+  color: var(--primary);
+  font-size: 12px;
+}
+
+.accordion-name {
+  flex: 1;
+  font-weight: 600;
+  text-transform: capitalize;
+}
+
+.accordion-count {
+  min-width: 26px;
+  padding: 2px 8px;
+  background: var(--bg-input);
+  border-radius: 12px;
+  color: var(--text-muted);
+  font-size: 13px;
+  text-align: center;
+}
+
+.accordion-section.uncategorized .accordion-name {
+  color: var(--text-muted);
+  font-style: italic;
+}
+
+.accordion-body {
+  display: flex;
+  flex-direction: column;
+  border-top: 1px solid var(--border);
+}
+
+.accordion-recipe {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 14px 16px;
+  background: none;
+  border: none;
+  border-bottom: 1px solid var(--border);
+  color: var(--text);
+  font-size: 15px;
+  text-align: start;
+}
+
+.accordion-recipe:last-child {
+  border-bottom: none;
+}
+
+.accordion-recipe-icon {
+  font-size: 18px;
+}

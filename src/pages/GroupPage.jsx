@@ -6,6 +6,9 @@ import { useAuth } from '../contexts/AuthContext'
 import { useLanguage } from '../contexts/LanguageContext'
 import Header from '../components/Header'
 import FloatingButton from '../components/FloatingButton'
+import {
+  groupRecipesByCategory, getCategoryLabel, UNCATEGORIZED_PARAM,
+} from '../utils/categories'
 import './GroupPage.css'
 
 export default function GroupPage() {
@@ -43,12 +46,7 @@ export default function GroupPage() {
     fetchData()
   }, [groupId])
 
-  const tagCounts = recipes.reduce((acc, r) => {
-    (r.tags || []).forEach(tag => {
-      acc[tag] = (acc[tag] || 0) + 1
-    })
-    return acc
-  }, {})
+  const categoryGroups = groupRecipesByCategory(recipes)
 
   const recipeCounts = recipes.reduce((acc, r) => {
     acc[r.authorId] = (acc[r.authorId] || 0) + 1
@@ -114,21 +112,23 @@ export default function GroupPage() {
 
       {activeTab === 'categories' && (
         <div className="categories-list">
-          {Object.keys(tagCounts).length === 0 ? (
+          {categoryGroups.length === 0 ? (
             <p className="categories-empty">{t('group.noCategories')}</p>
           ) : (
-            Object.entries(tagCounts)
-              .sort((a, b) => b[1] - a[1])
-              .map(([tag, count]) => (
-                <button
-                  key={tag}
-                  className="category-card"
-                  onClick={() => navigate(`/group/${groupId}/tag/${encodeURIComponent(tag)}`)}
-                >
-                  <span className="category-name">{tag}</span>
-                  <span className="category-count">{count} {t('group.recipes')}</span>
-                </button>
-              ))
+            categoryGroups.map(({ category, recipes: categoryRecipes }) => (
+              <button
+                key={category === null ? UNCATEGORIZED_PARAM : category}
+                className={`category-card ${category === null ? 'uncategorized' : ''}`}
+                onClick={() => navigate(
+                  `/group/${groupId}/tag/${encodeURIComponent(category ?? UNCATEGORIZED_PARAM)}`
+                )}
+              >
+                <span className="category-name">{getCategoryLabel(category, t)}</span>
+                <span className="category-count">
+                  {categoryRecipes.length} {t('group.recipes')}
+                </span>
+              </button>
+            ))
           )}
         </div>
       )}
