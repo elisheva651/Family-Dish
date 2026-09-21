@@ -2,13 +2,17 @@ import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import {
   doc, getDoc, updateDoc, collection, query, orderBy, onSnapshot,
-  addDoc, deleteDoc, serverTimestamp, getDocs
+  addDoc, deleteDoc, serverTimestamp, getDocs, where
 } from 'firebase/firestore'
 import { db } from '../firebase'
 import { useAuth } from '../contexts/AuthContext'
 import { useLanguage } from '../contexts/LanguageContext'
 import { translateMultiple, detectLanguage } from '../utils/translate'
 import Header from '../components/Header'
+import CategoryPicker from '../components/CategoryPicker'
+import {
+  getRecipeCategory, getCategoryLabel, collectCustomCategories, resolveCategoryInput,
+} from '../utils/categories'
 import './RecipePage.css'
 
 export default function RecipePage() {
@@ -24,6 +28,13 @@ export default function RecipePage() {
   const [commentText, setCommentText] = useState('')
   const [sending, setSending] = useState(false)
   const [loading, setLoading] = useState(true)
+
+  // Categorizing a dish that predates categories. Only its owner may do this.
+  const [pickerOpen, setPickerOpen] = useState(false)
+  const [pendingCategory, setPendingCategory] = useState(null)
+  const [suggestions, setSuggestions] = useState([])
+  const [savingCategory, setSavingCategory] = useState(false)
+  const [categoryError, setCategoryError] = useState(false)
 
   // Per-recipe language override (null = use global)
   const [recipeLanguage, setRecipeLanguage] = useState(null)
@@ -155,6 +166,38 @@ export default function RecipePage() {
     return unsubscribe
   }, [recipeId])
 
+  const category = recipe ? getRecipeCategory(recipe) : null
+
+  const openCategoryPicker = async () => {
+    setPickerOpen(true)
+    setCategoryError(false)
+    try {
+      const snap = await getDocs(
+        query(collection(db, 'recipes'), where('groupId', '==', groupId))
+      )
+      setSuggestions(collectCustomCategories(snap.docs.map(d => d.data())))
+    } catch (err) {
+      console.error('Failed to load categories:', err)
+    }
+  }
+
+  const handleSaveCategory = async () => {
+    const resolved = resolveCategoryInput(pendingCategory)
+    if (!resolved || savingCategory) return
+    setSavingCategory(true)
+    setCategoryError(false)
+    try {
+      await updateDoc(doc(db, 'recipes', recipeId), { category: resolved })
+      setRecipe(prev => ({ ...prev, category: resolved }))
+      setPickerOpen(false)
+      setPendingCategory(null)
+    } catch (error) {
+      console.error('Failed to save category:', error)
+      setCategoryError(true)
+    }
+    setSavingCategory(false)
+  }
+
   const handleSendComment = async () => {
     if (!commentText.trim() || sending) return
     setSending(true)
@@ -217,12 +260,49 @@ export default function RecipePage() {
 
       <div className="recipe-meta">
         <span>{t('recipe.by')} {author?.displayName || t('recipe.unknown')}</span>
-        {recipe.tags?.length > 0 && (
-          <span className="recipe-meta-tags">
-            {recipe.tags.join(', ')}
-          </span>
+        {category && (
+          <span className="recipe-meta-category">{getCategoryLabel(category, t)}</span>
         )}
       </div>
+
+      {!category && isAuthor && (
+        <div className="category-prompt">
+          {pickerOpen ? (
+            <>
+              <CategoryPicker
+                value={pendingCategory}
+                onChange={setPendingCategory}
+                suggestions={suggestions}
+              />
+              {categoryError && (
+                <p className="category-prompt-error">{t('category.saveFailed')}</p>
+              )}
+              <div className="category-prompt-actions">
+                <button
+                  className="btn-category-save"
+                  onClick={handleSaveCategory}
+                  disabled={!resolveCategoryInput(pendingCategory) || savingCategory}
+                >
+                  {savingCategory ? t('category.saving') : t('category.save')}
+                </button>
+                <button
+                  className="btn-category-cancel"
+                  onClick={() => setPickerOpen(false)}
+                >
+                  {t('category.cancel')}
+                </button>
+              </div>
+            </>
+          ) : (
+            <>
+              <span className="category-prompt-text">{t('category.needsCategory')}</span>
+              <button className="btn-category-choose" onClick={openCategoryPicker}>
+                {t('category.chooseOne')}
+              </button>
+            </>
+          )}
+        </div>
+      )}
 
       {isAuthor && (
         <div className="recipe-actions">
